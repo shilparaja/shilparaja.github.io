@@ -1,0 +1,365 @@
+---
+title: "Project 2: Modeling, Testing, and Predicting"
+author: "Shilpa Rajagopal"
+date: "11/22/2020"
+output: 
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+  pdf_document:
+    toc: no
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+hook_output = knit_hooks$get('output')
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
+
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center", warning = F, message = F,
+tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
+options(tibble.width = 100,width = 100)
+library(tidyverse)
+```
+
+## Introduction
+
+```{R}
+#creating the dataset 
+kffdata2019 <- read_csv("https://docs.google.com/spreadsheets/d/1_rxG8aDOpZJmv4epo7uDpv86tTpI1nSD_BmpTNYWE2M/export?format=csv&gid=0")
+
+#install.packages("fivethirtyeight")
+library(fivethirtyeight)
+library(tidyverse)
+state_info <- state_info
+state_info <- rename(state_info, location = state)
+state_info = subset(state_info, select = -c(state_abbrev,division))
+
+#merge datatsets by state 
+merged_data <- kffdata2019 %>% left_join(state_info, by="location")
+
+#creating a binary categorical variable 
+## variable 1 indicates that state poverty rate is above U.S. poverty rate of 0.123; variable 0 indicates that state poverty rate is below U.S. poverty rate of 0.123
+merged_data_new <- merged_data %>% mutate(pr_binary=ifelse(poverty_rate > 0.123,"above","below"))
+
+#removing rows that contain NAs from dataset
+kff_merged_data <- merged_data_new[-c(1,32),] 
+```
+
+*This is a custom dataset of 2019 statistics compiled from the Kaiser Family Foundation State Health Facts website. The dataset includes 50 observations, with 8 variables, pertaining to healthcare by state. Specifically, the health demographic variables are the percentage of all adults who reported not being able to see a doctor in the past 12 months due to cost ("no_doctor"), the percentage of uninsured nonelderly adults between the ages of 0-64("uninsured"), state total poverty rates ("poverty_rate"), and the percentage of males and females who self-reported a fair or poor health status based on a Behavioral Risk Factor Surveillance System ("fair_poor_health_male" and "fair_poor_health_female"). Variables describing state and overall geographic region were also included. Additionally, the state poverty level variable was dichotomized based on whether a given state fell above or below the national poverty rate of 0.123 (percentage of individuals overall who met the U.S. Census Bureau's poverty threshold in 2019).This data contains important information it helps highlight geographic disparities regarding access to care and perceived health status, influenced by uninsured and poverty rates across the U.S.*
+
+## MANOVA Testing
+
+```{R}
+#install.packages("dplyr")
+library(dplyr)
+#changing columns into numeric variables
+kff_merged_data$no_doctor <- as.numeric(as.character(kff_merged_data$no_doctor))
+kff_merged_data$fair_poor_health_male <- as.numeric(as.character(kff_merged_data$fair_poor_health_male))
+kff_merged_data$fair_poor_health_female <- as.numeric(as.character(kff_merged_data$fair_poor_health_female))
+
+#MANOVA test
+man <- manova(cbind(no_doctor, uninsured, poverty_rate, fair_poor_health_male, fair_poor_health_female)~region, data=kff_merged_data)
+summary(man)
+
+summary.aov(man)
+
+#post hoc t-tests
+pairwise.t.test(kff_merged_data$no_doctor,kff_merged_data$region, p.adj="none")
+pairwise.t.test(kff_merged_data$uninsured,kff_merged_data$region, p.adj="none")
+pairwise.t.test(kff_merged_data$poverty_rate,kff_merged_data$region, p.adj="none")
+pairwise.t.test(kff_merged_data$fair_poor_health_male,kff_merged_data$region, p.adj="none")
+pairwise.t.test(kff_merged_data$fair_poor_health_female,kff_merged_data$region, p.adj="none")
+
+#probability of at least one Type 1 error
+p_type1 = 1-(0.95^36)
+p_type1
+
+#Boneferroni correction
+a_overall = 0.05/36
+a_overall
+
+#MANOVA predictions: multivariate normality
+library(rstatix)
+group <- kff_merged_data$region 
+DVs <- kff_merged_data %>% select(no_doctor, uninsured, poverty_rate, fair_poor_health_male, fair_poor_health_female)
+##Test multivariate normality for each group (null: assumption met)
+sapply(split(DVs,group), mshapiro_test) #p-value less than 0.05, reject the null
+
+#MANOVA predictions: homogeneity of (co)variances
+##Box's M test (null: assumption met)
+box_m(DVs, group)
+##covariance matrices for each group
+lapply(split(DVs,group), cov)
+```
+
+*Through the MANOVA test, it was found that at least one group mean differs for at least one of the response variables based on the categorical variable "region", thus rejecting the null hypothesis (p-value = 0.01323). As such, a univariate ANOVA analysis was performed, which identified that there was a significant mean difference based on region for the following variables: no_doctor (p-value = 4.164e-05), uninsured (p-value = 0.001971), poverty_rate (p-value = 0.0003166), fair_poor_health_male (p-value = 0.0002343), and fair_poor_health_female (p-value = 0.0004859).* 
+
+*Five post-hoc tests were conducted to determine which regions varied for the given response variable. Since 36 hypothesis tests were performed in total, the probability of at least 1 Type 1 Error was found to be about 0.8422. To help maintain the Type 1 Error rate at 0.05, the significance level under the Boneferroni correction was set to be 0.00139. Based on this adjustment, the following were determined as the response variables that signficanltly differed by type of region: no_doctor rates varied between the Midwest and South (p-value = 0.00025) and Northeast and South (p-value = 1.3e-05); uninsured rates varied between the Northeast and South (p-value = 0.00038); poverty rates varied between the Midwest and South (p-value = 0.0010) and Northeast and South (p-value = 0.0002); rates of fair/poor health status for males varied between the Midwest and South (p-value = 0.00045), Northeast and South (p-value = 0.00044), and West and South (p-value = 0.00067); and rates of fair/poor health status for females varied between the Midwest and South (p-value = 0.00067) and Northeast and South (p-value = 0.00058).*
+
+*MANOVA assumptions include random samples (independent observations), linearity, dependent variables with multivariate normality, homogeneity within each dependent variable and equal covariance between dependent variables, and no extreme outliers or execessive correlation among the dependent variables. Multivariate normality was assessed using the Shapiro-Wilk test, in which the null states the assumption of multivariate normality is met. However, it was found that the p-value for each of the four regions was less than 0.05, indicating that the assumption is not fulfilled (i.e.: null hypothesis rejected). Box's M-test for Homogeneity of Covariance Matrices revealed a p-value of 0.256663, suggesting that we fail to reject the null and that the assumption of homogeneity of within-group covariances is met. This was further confirmed by observing the full covariance matrices, which found relative homogeneity across the dependent variables categorized by region.*
+
+## Randomization
+
+```{R}
+#randomization test for data (looking at binary poverty level and percentage of nonelderly adults who are uninsured)
+set.seed(348)
+rand_dist<-vector()
+for(i in 1:5000){
+new<-data.frame(uninsured=sample(kff_merged_data$uninsured),pr=kff_merged_data$pr_binary) 
+rand_dist[i]<-mean(new[new$pr=="above",]$uninsured)-   
+              mean(new[new$pr=="below",]$uninsured)} 
+
+#observed means by poverty level designation 
+kff_merged_data%>%group_by(pr_binary)%>%summarize(means=mean(uninsured))
+
+#observed difference in means by poverty level designation 
+kff_merged_data%>%group_by(pr_binary)%>% summarize(means=mean(uninsured))%>%summarize(`mean_diff`=diff(means))
+
+#two-tailed p value for original data
+mean(rand_dist>0.0327305 | rand_dist< -0.0327305) 
+
+#comparison with t-test
+t.test(data=kff_merged_data,uninsured~pr_binary)
+
+#plot visualizing the null distribution and the test statistic
+{hist(rand_dist,main="",ylab=""); abline(v = c(-0.0327305, 0.0327305),col="red")}
+```
+
+*This randomization test looks at mean difference in 2019 uninsured rates for non-elderly adults  across two groups - states that have a higher percentage of inidividuals that meet the poverty threshold compared to the national estimate (i.e.: states with a poverty rate greater than 12.3%) and states that have a lower percentage of inidividuals that meet the poverty threshold compared to the national estimate (i.e.: states with a poverty rate less than 12.3%). In this case, the null hypothesis states that there is no difference in mean uninsured rates between states that have a poverty rate above the national poverty level and states with a poverty rate below the national poverty level. The alternative hypothesis maintains that there is a significant difference in mean uninsured rates between states above and below the national poverty level of 12.3%.*
+
+*The mean uninsured rate for states with a poverty rate above the national rate is 0.117909, while the mean uninsured rate for states with a poverty rate lower than the national rate is 0.0851786. The observed difference in mean uninsured rates for non-elderly adults between the two state poverty distinctions is |-0.0327305|.The two-tailed p-value for the original dataset was found to be 0.0012. Since this p-value is less than the significance level of 0.05, we reject the null hypothesis, suggesting that there is an observable difference in uninsured rates between states above and below the overall U.S. poverty rate.* 
+
+## Linear Regression Model
+
+```{R}
+#mean-center numeric variable
+kff_merged_data$uninsured_c <- kff_merged_data$uninsured - mean(kff_merged_data$uninsured, na.rm=T)
+
+#predicting percentage of females reporting fair/poor perceived health status based on region and state uninsured rates
+fit <- lm(fair_poor_health_female ~ uninsured_c+region, data=kff_merged_data)
+summary(fit)
+
+#interaction effect
+fit2 <- lm(fair_poor_health_female ~ uninsured_c*region, data=kff_merged_data)
+summary(fit2)
+
+#interaction plot
+kff_merged_data %>% ggplot(aes(uninsured_c, fair_poor_health_female, color = region)) + geom_point() + geom_smooth(method="lm", se=FALSE, fullrange = TRUE)
+
+#check assumptions for linear regression
+ggplot(kff_merged_data, aes(uninsured_c, fair_poor_health_female, color = region))+geom_point()
+##normality of residuals
+resids<-fit2$residuals
+shapiro.test(resids) #Ho: true distribution is normal
+##homoskedasticity
+library(sandwich); library(lmtest)
+fit2 <- lm(fair_poor_health_female ~ uninsured_c*region, data=kff_merged_data)
+bptest(fit2) #H0: homoskedastic
+
+#regression using corrected SE - robust standard errors
+coeftest(fit2, vcov = vcovHC(fit2))
+
+#proportion of the variation in the outcome explained by the model
+##manual calculation 
+(sum((kff_merged_data$fair_poor_health_female-mean(kff_merged_data$fair_poor_health_female))^2)-sum(fit2$residuals^2))/sum((kff_merged_data$fair_poor_health_female-mean(kff_merged_data$fair_poor_health_female))^2) #R-squared: 0.4167019, #Adjusted R-squared: 0.3195 
+```
+
+*Based on the interaction effect, it can be determined that in areas in the Midwest with an average rate of uninsured individuals, the predicted percentage of females reporting a fair or poor health status is approximately 0.1789. For areas in the South with an average rate of uninsured individuals, the predicted percentage of females reporting a fair or poor health status is 0.028576 greater than that in the Midwest, difference is significant (b = 0.028576, t = 2.234, and p-value = 0.0309). The non-significant intercepts can be interpreted as follows: for every 1-unit increase in uninsured rates, predicted percentage of females reporting a fair or poor health status increased by 0.704287 for Midwest regions. In Northeast areas with an average uninsured rate, the predicted percentage of females reporting a fair/poor health status is 0.003218 greater than that in the Midwest. Alternatively, areas in the West region of the U.S. with an average uninsured rate have a predicted percentage of females reporting a fair/poor health status that is 0.005602 less than that in the Midwest. The slope of uninsured rate on percentage of poor/health status perception among females for the Northeast region is 0.160 less than for that for the Midwest region. The slope of uninsured rate on percentage of poor/health status perception among females for the Southern region is 0.438 less than for that for the Midwest region. The slope of uninsured rate on percentage of poor/health status perception among females for the Western U.S. region is 0.424 less than for that for the Midwest region.* 
+
+*Assumptions of linearity were assessed via a scatterplot. A Shapiro-Wilk normality test found that the p-value is 0.4072, thus failing to reject the null and indicating that the assumption of normality is met through this dataset. However, from the Breusch-Pagan test, the p-value was determined to be 0.004434, rejecting the null hypothesis and therefore failing to meet the assumption of homoskedasticity. As a result, robust standard errors were computed to account for the violation of homoskedasticity. From the revised regression, only the mean-centered uninsured rate was found to be significantly associated with percentage of females reporting fair/poor health status for the Midwest group: for every 1-unit increase in uninsured rate, predicted percentage of females reporting a fair or poor health status increased by 0.704 (b = 0.704, t = 2.696, p-value = 0.01006). Additonally, the predicted percentage of females reporting a fair or poor health status for Midwest regions with average uninsured rates was found to be 0.1789 (b = 0.1789, t = 29.6558, p-value < 2e-16). The R^2 value was found to be 0.4167, with an adjusted R^2 value of 0.3195, indicating the proportion of variation in the outcome explained by the model.*
+
+## Bootstrapped Standard Errors
+
+```{R}
+#bootstrapping residuals
+fit_new<-lm(fair_poor_health_female ~ uninsured_c*region,data=kff_merged_data) #fit model
+  resids<-fit_new$residuals #save residuals
+  fitted<-fit_new$fitted.values #save yhats/predictions
+   
+  resid_resamp<-replicate(5000,{
+    new_resids<-sample(resids,replace=TRUE) #resample resids w/ replacement
+    kff_merged_data$new_y<-fitted+new_resids #add new resids to yhats to get new "data"
+    fit_new<-lm(new_y~uninsured_c*region,data=kff_merged_data) #refit model
+    coef(fit_new) #save coefficient estimates (b0, b1, etc)
+}) 
+
+#estimated SEs
+resid_resamp%>%t%>%as.data.frame%>%summarize_all(sd)
+```
+
+*Computing bootstrapped standard errors via resampling of residuals revealed standard errors that more closely matched the original standard errors as opposed to the robust standard errors. It generally appears as though the bootstrapped SEs are slightly higher than those computed using the regression with robust SEs. Since higher standard errors correspond with larger p-values, it can be assumed that the bootstrapped version also generally possesses higher p-values compared to the regression performed using robust SEs. However, all three appear to be relatively similar when running the regression model with interaction.*
+
+## Logistic Regression Model: Predicting a binary variable
+
+```{R}
+#Explanatory variables of interest: geographic region and non-elderly adults uninsured rates
+
+#Binary variable (dependent variable): created by dichotomizing the variable "no_doctor," which describes the percentage of all adults who reported not being able to see a doctor in the past 12 months due to cost
+##In the United States, 13.4% of individuals reported not being able to see a doctor in the past 12 months due to cost. The variable "1" will represent incidences in which states access to care is worse than the national average (more individuals reported not being able to see a doctor in the past year). The variable "0" will represent incidences in which states access to care is better than the national average (fewer individuals reported not being able to see a doctor in the past year).
+
+kff_new <- kff_merged_data %>% mutate(access_care=ifelse(no_doctor > 0.134,"worse","better"))
+kff_new <- kff_new %>% mutate(y=ifelse(access_care=="worse",1,0))
+kff_new$access_care <-factor(kff_new$access_care,levels=c("worse","better"))
+
+library(tidyverse); library(lmtest)
+fit_logreg <-glm(y~region+uninsured, data=kff_new, family="binomial")
+coeftest(fit_logreg)
+
+#odds scale coefficients
+coef(fit_logreg)%>%exp%>%round(5)%>%data.frame
+
+#convert odds to probability
+odds2prob<-function(odds){odds/(1+odds)}
+odds2prob(7.292914e+01)
+odds2prob(7.212649e+01)
+odds2prob(1.880434e+87)
+
+#confusion matrix
+probs<-predict(fit_logreg,type="response")
+table(predict=as.numeric(probs>.5),truth=kff_new$y)%>%addmargins
+
+(29+19)/50 #accuracy
+19/20 #TPR (sensitivity)
+29/30 #TNR (specificity)
+19/20 #PPV (precision)
+
+#density plot
+kff_new$logit<-predict(fit_logreg)
+kff_new %>% mutate(access_care=factor(access_care,levels=c("worse","better"))) %>% ggplot(aes(logit, fill=access_care))+geom_density(alpha=.3)+geom_vline(xintercept=0,lty=2)
+
+#ROC curve
+library(plotROC)
+kff_new$prob<-predict(fit_logreg,type="response")
+ROCplot<-ggplot(kff_new)+geom_roc(aes(d=access_care,m=prob), n.cuts=0) 
+ROCplot
+calc_auc(ROCplot)
+```
+
+*The odds of a worse access to care rate for the South region are 72.93 times that of the Midwest. Additionally, the odds of a worse access to care rate for areas in the West are 72.13 times that of the Midwest. Controlling for region, for every 1-unit increase in uninsured rates, odds of a worse access to care rate change by a factor of e^200.96 or 1.88e+87. This suggests that percentage of uninsured individuals has a significant positive impact on odds of an area reporting worse access to care rates compared to the national average.*
+
+*A confusion matrix was created to determine the following: accuracy of 0.96, sensitivity of 0.95, specificity of 0.967, and precision of 0.95. These are all relatively high values, conferring greater strength to the model. Additionally, a density plot grouped by the binary outcome variable of access to care and a ROC curve plotting sensitivity and specificity were generated. From the curve, the AOC value was found to be 0.988. This suggests that there is 0.988 probability that the model will be able to differentiate between a y=1 value (worse access to care rate compared to the national average) and y=0 value. In this case, an AUC higher than 0.9 is considered to be great in terms of the model's overall ability to separate between the binary outcomes.*
+
+```{r global_options, include=FALSE}
+#global functions
+library(knitr)
+opts_chunk$set(fig.align="center", fig.height=5, message=FALSE, warning=FALSE, fig.width=8, tidy.opts=list(width.cutoff=60),tidy=TRUE)
+
+#classification diagnostics function
+class_diag<-function(probs,truth){
+  tab<-table(factor(probs>.5,levels=c("FALSE","TRUE")),truth)
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+  f1=2*(sens*ppv)/(sens+ppv)
+
+  if(is.numeric(truth)==FALSE & is.logical(truth)==FALSE){
+    truth<-as.numeric(truth)-1}
+  
+  #CALCULATE EXACT AUC
+  ord<-order(probs, decreasing=TRUE)
+  probs <- probs[ord]; truth <- truth[ord]
+  
+  TPR=cumsum(truth)/max(1,sum(truth)) 
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  
+  dup<-c(probs[-1]>=probs[-length(probs)], FALSE)
+  TPR<-c(0,TPR[!dup],1); FPR<-c(0,FPR[!dup],1)
+  
+  n <- length(TPR)
+  auc<- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+
+  data.frame(acc,sens,spec,ppv,f1,auc)
+}
+```
+
+## Logistic Regression Model: Predicting a binary variable using all variables
+
+```{R}
+#Cleaning dataset to retain core original variables along with binary variable 
+updated_data <- select(kff_new, -c("location", "no_doctor", "pr_binary", "uninsured_c", "y", "logit", "prob"))
+sum(updated_data$access_care == "worse") #20
+sum(updated_data$access_care == "better") #30
+
+#Predicting whether access to care is better or worse than the national designation (defined by percentage of people who did not visit a doctor in the past 12 months due to cost) based on region, uninsured rate, poverty rate, and percentage of men and women reporting poor/fair perceived health status. 
+
+fit_full<-glm(access_care~.,data=updated_data,family="binomial")
+coef(fit_full)
+prob_full<-predict(fit_full,type="response")
+class_diag(prob_full,updated_data$access_care)
+
+#10-fold cross-validation 
+k=10
+
+data2<-updated_data[sample(nrow(updated_data)),] 
+folds<-cut(seq(1:nrow(updated_data)),breaks=k,labels=F) 
+
+diags<-NULL
+for(i in 1:k){
+  train<-data2[folds!=i,]
+  test<-data2[folds==i,]
+  truth<-test$access_care
+
+  fit2<-glm(access_care~.,data=train,family="binomial")
+  probs<-predict(fit2,newdata = test,type="response")
+  
+  diags<-rbind(diags,class_diag(probs,truth))
+}
+
+summarize_all(diags,mean)
+
+#LASSO
+library(glmnet)
+response <- as.matrix(updated_data$access_care)
+data_preds <- model.matrix(access_care~ -1+.,data=updated_data) #predictors (drop intercept)
+head(data_preds)
+data_preds<-scale(data_preds)
+
+cv<-cv.glmnet(data_preds,response,family="binomial")
+lasso_fit<-glmnet(data_preds,response,family="binomial",lambda=cv$lambda.1se)
+coef(lasso_fit)
+
+#10-fold CV using lasso-selected variables
+k=10
+
+#addressing regions (categorigal variable) by creating dummy variables 
+new_data<-updated_data %>% mutate(regionMidwest=ifelse(updated_data$region=="Midwest",1,0))
+
+data<-new_data[sample(nrow(new_data)),] #randomly order rows
+folds<-cut(seq(1:nrow(new_data)),breaks=k,labels=F) #create folds
+diags<-NULL
+for(i in 1:k){
+  ## Create training and test sets
+  train<-data[folds!=i,]
+  test<-data[folds==i,]
+  truth<-test$access_care
+  ## Train model on training set
+  fit<-glm(access_care~uninsured+poverty_rate+regionMidwest,data=train,family="binomial")
+  probs<-predict(fit,newdata = test,type="response")
+  ## Test model on test set (save all k results)
+  diags<-rbind(diags,class_diag(probs,truth))
+}
+diags%>%summarize_all(mean)
+```
+
+*In-sample classification diagnostics revealed that the model's accuracy is 0.96, sensitivity is 0.967, specificity is 0.95, and precision is 0.967. The AUC was reported as 0.995, imdicating strong separability capabilities using the model. However, upon performing a 10-fold cross validation, testing average performance of the model over 10 tests, a given run found that the accuracy was 0.86, the sensitivity was 0.905, the precision was 0.892, and AUC decreased to 0.829 (re-classified from great to good in terms of the model's ability to distinguish between the binary outcome variable). This decrease in AUC based on out-of-sample classification diagnostics suggest that the model may be overfitting, perhaps due to complexity.*
+
+*After conducting a LASSO analysis, the following variables were selected as the most predictive of access to care rate (as a binary outcome): uninsured rate, poverty rate, and the Midwest region. Cross-validating the model's lasso-selected variables using a 10-fold CV for a specific test run found that accuracy was 0.92, sensitivity was 0.975, specificity was 0.908, precision was 0.9, and AUC was 0.908 (relatively higher than that of the full logistic regression model above and indicative of a great level of model separability for the binary outcome variable).*
+
+```{R, echo=F}
+## DO NOT DELETE THIS CHUNK!
+sessionInfo()
+Sys.time()
+Sys.info()
+```

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>My Website</title>
+    <link>/</link>
+    <description>Recent content on My Website</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-US</language>
+    <lastBuildDate>Fri, 04 Dec 2020 00:00:00 +0000</lastBuildDate><atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Test Post</title>
+      <link>/post/2020/12/04/test-post/</link>
+      <pubDate>Fri, 04 Dec 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2020/12/04/test-post/</guid>
+      <description> Heading of my post Content
+Subheading Content
+hist(quakes$mag) import re match = re.match(r&amp;quot;\d+&amp;quot;, &amp;quot;SDS348&amp;quot;)   </description>
+    </item>
+    
+    <item>
+      <title>Project 2: Modeling, Testing, and Predicting</title>
+      <link>/project/project2/</link>
+      <pubDate>Sun, 22 Nov 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project2/</guid>
+      <description>Introduction # creating the dataset kffdata2019 &amp;lt;- read_csv(&amp;quot;https://docs.google.com/spreadsheets/d/1_rxG8aDOpZJmv4epo7uDpv86tTpI1nSD_BmpTNYWE2M/export?format=csv&amp;amp;gid=0&amp;quot;) # install.packages(&amp;#39;fivethirtyeight&amp;#39;) library(fivethirtyeight) library(tidyverse) state_info &amp;lt;- state_info state_info &amp;lt;- rename(state_info, location = state) state_info = subset(state_info, select = -c(state_abbrev, division)) # merge datatsets by state merged_data &amp;lt;- kffdata2019 %&amp;gt;% left_join(state_info, by = &amp;quot;location&amp;quot;) # creating a binary categorical variable variable 1 indicates # that state poverty rate is above U.S. poverty rate of # 0.123; variable 0 indicates that state poverty rate is # below U.</description>
+    </item>
+    
+    <item>
+      <title>Project 1: Exploratory Data Analysis</title>
+      <link>/project/project1/</link>
+      <pubDate>Sun, 18 Oct 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project1/</guid>
+      <description>Introduction # Collecting Data install.packages(&amp;#39;fivethirtyeight&amp;#39;) library(fivethirtyeight) library(tidyverse) senate_seat_forecast &amp;lt;- senate_seat_forecast state_info &amp;lt;- state_info The two datasets chosen for this exploratory analysis are the Senate Seat Forecast data from the 2018 elections and State Information data, erived from the fivethirtyeight package. The Senate Seat forecast data includes 12 variables with 28,353 observations. Select variables of interest in this dataset are: forecaste data, state abbreviation, candidate, party affiliation, incumbent status, probability of winning, voter share, 10th percentile voter share, and 90th percentile voting share.</description>
+    </item>
+    
+    <item>
+      <title>Projects</title>
+      <link>/projects/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/projects/</guid>
+      <description> Check out some of my coding projects below:
+ Wrangling &amp;amp; Exploratory Data Analysis
+ Modeling, Inference, Prediction
+  -- </description>
+    </item>
+    
+    <item>
+      <title>Resume</title>
+      <link>/resume/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/resume/</guid>
+      <description>    </description>
+    </item>
+    
+  </channel>
+</rss>

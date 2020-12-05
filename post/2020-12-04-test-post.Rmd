@@ -1,0 +1,26 @@
+---
+title: Test Post
+author: ''
+date: '2020-12-04'
+slug: test-post
+categories: []
+tags: []
+description: ''
+---
+
+#Heading of my post
+
+Content
+
+##Subheading
+
+Content
+
+```{R}
+hist(quakes$mag)
+```
+
+```{python}
+import re
+match = re.match(r"\d+", "SDS348")
+```

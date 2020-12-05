@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Shilpa Rajagopal" />
+    
+    <link rel="shortcut icon" type="image/x-icon" href="../../img/favicon.ico">
+    <title>Project 1: Exploratory Data Analysis</title>
+    <meta name="generator" content="Hugo 0.79.0" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="../../css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="../../"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="../../post/">BLOG</a></li>
+        
+        <li><a href="../../projects/">PROJECTS</a></li>
+        
+        <li><a href="../../resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="../../project/project1/">Project 1: Exploratory Data Analysis</a></strong>
+          </h3>
+        </div>
+ 
+<div class="blog-title">
+          <h4>
+         October 18, 2020 
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+<script src="../../rmarkdown-libs/htmlwidgets/htmlwidgets.js"></script>
+<script src="../../rmarkdown-libs/plotly-binding/plotly.js"></script>
+<script src="../../rmarkdown-libs/typedarray/typedarray.min.js"></script>
+<script src="../../rmarkdown-libs/jquery/jquery.min.js"></script>
+<link href="../../rmarkdown-libs/crosstalk/css/crosstalk.css" rel="stylesheet" />
+<script src="../../rmarkdown-libs/crosstalk/js/crosstalk.min.js"></script>
+<link href="../../rmarkdown-libs/plotly-htmlwidgets-css/plotly-htmlwidgets.css" rel="stylesheet" />
+<script src="../../rmarkdown-libs/plotly-main/plotly-latest.min.js"></script>
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<pre class="r"><code># Collecting Data install.packages(&#39;fivethirtyeight&#39;)
+library(fivethirtyeight)
+library(tidyverse)
+senate_seat_forecast &lt;- senate_seat_forecast
+state_info &lt;- state_info</code></pre>
+<p><em>The two datasets chosen for this exploratory analysis are the Senate Seat Forecast data from the 2018 elections and State Information data, erived from the fivethirtyeight package. The Senate Seat forecast data includes 12 variables with 28,353 observations. Select variables of interest in this dataset are: forecaste data, state abbreviation, candidate, party affiliation, incumbent status, probability of winning, voter share, 10th percentile voter share, and 90th percentile voting share. Additionally, the State Information dataset comprises 51 observations (includes Washington, D.C.) with the following four variables: state, state abbreviation, division, and region.</em></p>
+<p><em>These two datasets are of particular interest because the 2018 Senate election marked the first time I was able to vote. Casting my ballot in TX during a contentious and close Senate race piqued my interest in understanding the broader political landscape of our country and implications of a predominantly two-party system. Potential associations I expect from the data include region/state differences in winning probability based on party affiliation (i.e.: states in the South typically have Republican ties), general low voting share and winning probability values for third party candidates, and a higher winning probability for incumbent candidates.</em></p>
+</div>
+<div id="joiningmerging" class="section level2">
+<h2>Joining/Merging</h2>
+<pre class="r"><code># Renaming Common Variable: state abbreviation
+senate_seat_forecast &lt;- rename(senate_seat_forecast, state_abbrev = state)
+
+# Joining Datasets
+merged_data &lt;- senate_seat_forecast %&gt;% left_join(state_info, 
+    by = &quot;state_abbrev&quot;)</code></pre>
+<p><em>The two datasets were joined across the variable &quot;state abbreviation,&quot; which was renamed in the Senate Seat Forecast dataset to match that in the State Information dataset. A left join was used to merge the dataset in order to preserve the numeric data from Senate Seat Forecast and accordingly add matches from the Senate Information dataset. The case that was dropped upon joining was Washington, D.C., which is expected because D.C. does not have representation in the Senate.</em></p>
+</div>
+<div id="data-wrangling-includes-tidying-functions" class="section level2">
+<h2>Data Wrangling (includes Tidying Functions)</h2>
+<pre class="r"><code># Exploring with dplyr functions
+merged_data_edit &lt;- merged_data %&gt;% filter(complete.cases(merged_data))
+
+merged_data_edit %&gt;% select(forecastdate, candidate, voteshare, 
+    state) %&gt;% group_by(candidate, state) %&gt;% summarize(mean_voteshare_candidate = mean(voteshare, 
+    na.rm = T)) %&gt;% arrange(desc(mean_voteshare_candidate))</code></pre>
+<pre><code>## # A tibble: 83 x 3
+## # Groups:   candidate [83]
+##    candidate             state         mean_voteshare_candidate
+##    &lt;fct&gt;                 &lt;chr&gt;                            &lt;dbl&gt;
+##  1 Mazie K. Hirono       Hawaii                            75.7
+##  2 Bernard Sanders       Vermont                           68.0
+##  3 John Barrasso         Wyoming                           67.5
+##  4 Benjamin L. Cardin    Maryland                          66.5
+##  5 Kirsten E. Gillibrand New York                          66.3
+##  6 Sheldon Whitehouse    Rhode Island                      64.5
+##  7 Elizabeth Warren      Massachusetts                     63.2
+##  8 Christopher Murphy    Connecticut                       61.5
+##  9 Angus S. King Jr.     Maine                             60.9
+## 10 Maria Cantwell        Washington                        60.7
+## # … with 73 more rows</code></pre>
+<pre class="r"><code>merged_data_edit %&gt;% group_by(candidate, party) %&gt;% summarize(mean_win_candidate = mean(win_probability, 
+    na.rm = T))</code></pre>
+<pre><code>## # A tibble: 83 x 3
+## # Groups:   candidate [83]
+##    candidate          party mean_win_candidate
+##    &lt;fct&gt;              &lt;fct&gt;              &lt;dbl&gt;
+##  1 Amy Klobuchar      D              0.996    
+##  2 Angela Green       G              0.0000160
+##  3 Angus S. King Jr.  I              0.993    
+##  4 Benjamin L. Cardin D              0.999    
+##  5 Bernard Sanders    I              1.00     
+##  6 Beto O&#39;Rourke      D              0.241    
+##  7 Bill Nelson        D              0.597    
+##  8 Bob Flanders       R              0.00438  
+##  9 Bob Hugin          R              0.0992   
+## 10 Chele Farley       R              0.000389 
+## # … with 73 more rows</code></pre>
+<pre class="r"><code>merged_data_edit_diff &lt;- merged_data_edit %&gt;% mutate(voteshare_diff = p90_voteshare - 
+    p10_voteshare) %&gt;% group_by(party) %&gt;% summarize(mean_voteshare_diff = mean(voteshare_diff, 
+    na.rm = T))
+glimpse(merged_data_edit_diff)</code></pre>
+<pre><code>## Rows: 5
+## Columns: 2
+## $ party               &lt;fct&gt; D, G, I, L, R
+## $ mean_voteshare_diff &lt;dbl&gt; 10.473690, 3.940714, 11.282622, 5.622347, 10.8079…</code></pre>
+<pre class="r"><code>merged_data_edit_percents &lt;- merged_data_edit %&gt;% mutate(win_percent = win_probability * 
+    100) %&gt;% group_by(candidate) %&gt;% summarize(sd_win_percent = sd(win_percent, 
+    na.rm = T))
+glimpse(merged_data_edit_percents)</code></pre>
+<pre><code>## Rows: 83
+## Columns: 2
+## $ candidate      &lt;fct&gt; Amy Klobuchar, Angela Green, Angus S. King Jr., Benjam…
+## $ sd_win_percent &lt;dbl&gt; 0.486021652, 0.003671047, 0.736232450, 0.083359196, 0.…</code></pre>
+<pre class="r"><code># Number of Unique Senate Candidates in 2018
+merged_data_edit %&gt;% summarize(n_distinct(candidate))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   `n_distinct(candidate)`
+##                     &lt;int&gt;
+## 1                      83</code></pre>
+<pre class="r"><code># General Summary Statistics
+summary &lt;- merged_data_edit %&gt;% group_by(state, party) %&gt;% summarize_if(is.numeric, 
+    c(mean, sd, min, max, var))
+summary = summary[, !grepl(&quot;^class&quot;, names(summary))]
+names(summary) &lt;- gsub(&quot;fn1&quot;, &quot;mean&quot;, names(summary))
+names(summary) &lt;- gsub(&quot;fn2&quot;, &quot;sd&quot;, names(summary))
+names(summary) &lt;- gsub(&quot;fn3&quot;, &quot;min&quot;, names(summary))
+names(summary) &lt;- gsub(&quot;fn4&quot;, &quot;max&quot;, names(summary))
+names(summary) &lt;- gsub(&quot;fn5&quot;, &quot;var&quot;, names(summary))
+glimpse(summary)</code></pre>
+<pre><code>## Rows: 76
+## Columns: 22
+## Groups: state [33]
+## $ state                &lt;chr&gt; &quot;Arizona&quot;, &quot;Arizona&quot;, &quot;Arizona&quot;, &quot;California&quot;, &quot;…
+## $ party                &lt;fct&gt; D, G, R, D, D, R, D, R, D, R, D, R, D, L, R, D, …
+## $ win_probability_mean &lt;dbl&gt; 6.790585e-01, 1.598639e-05, 3.209177e-01, 5.0000…
+## $ voteshare_mean       &lt;dbl&gt; 50.514966, 2.362143, 47.123197, 50.000000, 61.45…
+## $ p10_voteshare_mean   &lt;dbl&gt; 45.8253741, 0.6323469, 42.4386054, 44.1269388, 5…
+## $ p90_voteshare_mean   &lt;dbl&gt; 55.173776, 4.573061, 51.783299, 55.873061, 66.75…
+## $ win_probability_sd   &lt;dbl&gt; 5.862625e-02, 3.671047e-05, 5.863425e-02, 4.7473…
+## $ voteshare_sd         &lt;dbl&gt; 0.6872613, 0.3239809, 0.9417125, 10.6537962, 1.9…
+## $ p10_voteshare_sd     &lt;dbl&gt; 0.41716706, 0.09289211, 1.48361993, 10.65831814,…
+## $ p90_voteshare_sd     &lt;dbl&gt; 1.2024544, 0.6176921, 0.4963048, 10.6583181, 2.4…
+## $ win_probability_min  &lt;dbl&gt; 0.5714, 0.0000, 0.1907, 0.0005, 0.9621, 0.0004, …
+## $ voteshare_min        &lt;dbl&gt; 49.48, 1.96, 44.97, 36.35, 56.22, 31.98, 55.43, …
+## $ p10_voteshare_min    &lt;dbl&gt; 44.54, 0.49, 39.33, 30.83, 51.36, 24.88, 49.19, …
+## $ p90_voteshare_min    &lt;dbl&gt; 53.14, 3.73, 50.50, 41.74, 60.97, 37.79, 61.70, …
+## $ win_probability_max  &lt;dbl&gt; 0.8093, 0.0001, 0.4286, 0.9995, 0.9996, 0.0379, …
+## $ voteshare_max        &lt;dbl&gt; 52.26, 2.85, 48.48, 63.65, 64.54, 42.05, 62.75, …
+## $ p10_voteshare_max    &lt;dbl&gt; 46.73, 0.77, 44.80, 58.26, 58.69, 37.27, 57.68, …
+## $ p90_voteshare_max    &lt;dbl&gt; 57.80, 5.50, 53.43, 69.17, 71.60, 46.98, 67.86, …
+## $ win_probability_var  &lt;dbl&gt; 3.437037e-03, 1.347659e-09, 3.437975e-03, 2.2537…
+## $ voteshare_var        &lt;dbl&gt; 0.47232816, 0.10496365, 0.88682251, 113.50337445…
+## $ p10_voteshare_var    &lt;dbl&gt; 1.740284e-01, 8.628944e-03, 2.201128e+00, 1.1359…
+## $ p90_voteshare_var    &lt;dbl&gt; 1.44589662, 0.38154350, 0.24631843, 113.59974564…</code></pre>
+<pre class="r"><code># Overall Data Minimum and Maximum Values
+min_max_table &lt;- merged_data_edit %&gt;% summarize(min_win = min(win_probability), 
+    max_win = max(win_probability), min_voteshare = min(voteshare), 
+    max_voteshare = max(voteshare), min_p10 = min(p10_voteshare), 
+    max_p10 = max(p10_voteshare), min_p90 = min(p90_voteshare), 
+    maxp90 = max(p90_voteshare))
+glimpse(min_max_table)</code></pre>
+<pre><code>## Rows: 1
+## Columns: 8
+## $ min_win       &lt;dbl&gt; 0
+## $ max_win       &lt;dbl&gt; 1
+## $ min_voteshare &lt;dbl&gt; 1.5
+## $ max_voteshare &lt;dbl&gt; 77.27
+## $ min_p10       &lt;dbl&gt; 0.36
+## $ max_p10       &lt;dbl&gt; 71.43
+## $ min_p90       &lt;dbl&gt; 2.95
+## $ maxp90        &lt;dbl&gt; 85.11</code></pre>
+<pre class="r"><code># Calculating Summary Statistics including untidying and
+# tidying functions
+wide_view &lt;- merged_data_edit %&gt;% pivot_wider(names_from = party, 
+    values_from = win_probability)
+
+partymeans &lt;- wide_view %&gt;% group_by(region) %&gt;% summarize(meanwinprob_D = mean(D, 
+    na.rm = T), meanwinprob_R = mean(R, na.rm = T), meanwinprob_G = mean(G, 
+    na.rm = T), meanwinprob_L = mean(L, na.rm = T), meanwinprob_I = mean(I, 
+    na.rm = T))
+glimpse(partymeans)</code></pre>
+<pre><code>## Rows: 4
+## Columns: 6
+## $ region        &lt;chr&gt; &quot;Midwest&quot;, &quot;Northeast&quot;, &quot;South&quot;, &quot;West&quot;
+## $ meanwinprob_D &lt;dbl&gt; 0.7377696, 0.8371091, 0.5222508, 0.6019286
+## $ meanwinprob_R &lt;dbl&gt; 0.26222358, 0.01842266, 0.37774398, 0.37225689
+## $ meanwinprob_G &lt;dbl&gt; NaN, NaN, NaN, 1.598639e-05
+## $ meanwinprob_L &lt;dbl&gt; 2.006803e-05, NaN, 4.421769e-06, 8.676871e-04
+## $ meanwinprob_I &lt;dbl&gt; NaN, 0.817146, NaN, NaN</code></pre>
+<pre class="r"><code># Retidying Data
+tidydata &lt;- wide_view %&gt;% pivot_longer(cols = D:I, names_to = &quot;party&quot;, 
+    values_to = &quot;win_prob&quot;, values_drop_na = TRUE)
+
+# Additional Interesting Summary Statistics
+incumbent_advantage &lt;- merged_data_edit %&gt;% group_by(incumbent) %&gt;% 
+    summarize(mean_win = mean(win_probability, na.rm = T), sd_win = sd(win_probability)) %&gt;% 
+    arrange(desc(mean_win))
+glimpse(incumbent_advantage)</code></pre>
+<pre><code>## Rows: 2
+## Columns: 3
+## $ incumbent &lt;lgl&gt; TRUE, FALSE
+## $ mean_win  &lt;dbl&gt; 0.8968181, 0.1543770
+## $ sd_win    &lt;dbl&gt; 0.1676154, 0.2614893</code></pre>
+<pre class="r"><code>win_prob_partystate &lt;- merged_data_edit %&gt;% group_by(party, state_abbrev) %&gt;% 
+    summarize(mean_win = mean(win_probability, na.rm = T), sd_win = sd(win_probability))
+win_prob_partystate[order(win_prob_partystate[, &quot;state_abbrev&quot;]), 
+    ]</code></pre>
+<pre><code>## # A tibble: 76 x 4
+## # Groups:   party [5]
+##    party state_abbrev  mean_win    sd_win
+##    &lt;fct&gt; &lt;chr&gt;            &lt;dbl&gt;     &lt;dbl&gt;
+##  1 D     AZ           0.679     0.0586   
+##  2 G     AZ           0.0000160 0.0000367
+##  3 R     AZ           0.321     0.0586   
+##  4 D     CA           0.5       0.475    
+##  5 D     CT           0.995     0.00763  
+##  6 R     CT           0.00492   0.00763  
+##  7 D     DE           0.983     0.0254   
+##  8 R     DE           0.0173    0.0254   
+##  9 D     FL           0.597     0.0618   
+## 10 R     FL           0.403     0.0618   
+## # … with 66 more rows</code></pre>
+<pre class="r"><code># Correlation Matrix
+numericdata &lt;- merged_data_edit %&gt;% select(win_probability, voteshare, 
+    p10_voteshare, p90_voteshare)
+numericdata_cor = cor(numericdata, method = c(&quot;pearson&quot;))
+print(numericdata_cor)</code></pre>
+<pre><code>##                 win_probability voteshare p10_voteshare p90_voteshare
+## win_probability       1.0000000 0.7940337     0.8062783     0.7819260
+## voteshare             0.7940337 1.0000000     0.9977383     0.9982313
+## p10_voteshare         0.8062783 0.9977383     1.0000000     0.9919968
+## p90_voteshare         0.7819260 0.9982313     0.9919968     1.0000000</code></pre>
+<p><em>The number of candidates running in the 2018 Senate elections across all represented states was 83. General summary statistics looked at five functions (mean, standard deviation, minimum, maximum, and variance) of four different numerical variables (winning probability, voting share, 10th percentile voting share, and 90th percentile voting share) for each state across party lines. As an example, when looking at the summary table's first state, Arizona, it can be inferred that the mean voting share for the Democratic Party is 50.52%,47.12% for the Republican Party, and 2.36% for the Green Party. This is consistent with the actual outcomes of the 2018 Senate race in Arizona, which was won by Democrat candidate Kyrsten Sinema with 50% of the votes. These metrics can be extrapolated for all other states using the summary table. Additional dplyr functions were used to find the mean voting share per candidate grouped by state, with Mazie K. Hirano from Hawaii possessing the highest candidate voter share percentage at 75.7%. Some of these general summary statistics were calculated using tidyr functions. Since the data was previously tidy, the pivot_wider function was used to rearrange the data wider based on political party affiliation, with values ascribed to winning probability in order to get mean winning probabilities per party for each U.S. region (for the Midwest, Dem winning probability was predicted as 0.7378, Rep winning probability was 0.2622, and Labor winning probability was close to zero). The data was then re-arranged again to retain its tidiness by using the pivot_longer function.</em></p>
+<p><em>Furthermore, the mean winning probability for each party across region was investigated. Across all four regions (West, Midwest, South, Northeast), Democrats possessed the highest mean probability of winning; the Northeast especially was projected to favor Democrats by 83.71% on average. Of interesting note, Independents also had a high forecasted probability of winning in the Northeast with an 81.71%. This specifically reflects the party affiliation of Senator Bernie Sanders from Vermont in the Northeast, who is registered as an Independent on the ballot and enjoys a high degree of popularity in his home state. Analysis to assess incumbent advantage indicated that the mean winning probability for incumbents is 89.68% (standard deviation of 16.76%), whereas that for non-incumbents is significantly lower at 15.43% (standard deviation of 26.15%). Correlation indices across all four numeric variables listed above were above 0.75, suggesting a strong, positive, linear relationship across the variables.</em></p>
+</div>
+<div id="visualizations" class="section level2">
+<h2>Visualizations</h2>
+<pre class="r"><code># Data Visualizations
+
+# Remove redundant information from correlation matrix
+get_lower_tri &lt;- function(numericdata_cor) {
+    numericdata_cor[upper.tri(numericdata_cor)] &lt;- NA
+    return(numericdata_cor)
+}
+get_upper_tri &lt;- function(numericdata_cor) {
+    numericdata_cor[lower.tri(numericdata_cor)] &lt;- NA
+    return(numericdata_cor)
+}
+
+reorder_cor &lt;- function(numericdata_cor) {
+    distance &lt;- as.dist((1 - numericdata_cor)/2)
+    hc &lt;- hclust(distance)
+    numericdata_cor &lt;- numericdata_cor[hc$order, hc$order]
+}
+numericdata_cor &lt;- reorder_cor(numericdata_cor)
+upper_tri &lt;- get_upper_tri(numericdata_cor)
+upper_tri</code></pre>
+<pre><code>##                 win_probability p10_voteshare voteshare p90_voteshare
+## win_probability               1     0.8062783 0.7940337     0.7819260
+## p10_voteshare                NA     1.0000000 0.9977383     0.9919968
+## voteshare                    NA            NA 1.0000000     0.9982313
+## p90_voteshare                NA            NA        NA     1.0000000</code></pre>
+<pre class="r"><code>library(reshape2)
+melted_cor &lt;- melt(upper_tri, na.rm = TRUE)
+
+# Heatmap of numeric variables
+library(ggplot2)
+heatmap &lt;- ggplot(melted_cor, aes(Var2, Var1, fill = value)) + 
+    geom_tile(color = &quot;white&quot;) + scale_fill_gradient2(low = &quot;tomato3&quot;, 
+    high = &quot;seagreen&quot;, mid = &quot;goldenrod1&quot;, midpoint = 0.75, limit = c(0.5, 
+        1), space = &quot;Lab&quot;, name = &quot;Pearson\nCorrelation&quot;) + theme_minimal() + 
+    ggtitle(&quot;Heatmap of Numeric Variables&quot;) + theme(axis.text.x = element_text(angle = 45, 
+    vjust = 1, size = 12, hjust = 1)) + coord_fixed()
+print(heatmap)</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-4-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># Plotting incumbent advantage win probability by party
+incumb_advantage_party &lt;- merged_data_edit %&gt;% select(incumbent, 
+    party, win_probability) %&gt;% slice(1:500)
+incumb_advantage_party$party &lt;- as.factor(incumb_advantage_party$party)
+head(incumb_advantage_party)</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##   incumbent party win_probability
+##   &lt;lgl&gt;     &lt;fct&gt;           &lt;dbl&gt;
+## 1 FALSE     D            0.738   
+## 2 FALSE     R            0.262   
+## 3 FALSE     G            0       
+## 4 TRUE      D            0.999   
+## 5 FALSE     D            0.000600
+## 6 TRUE      D            0.999</code></pre>
+<pre class="r"><code>boxplot &lt;- ggplot(incumb_advantage_party, aes(x = incumbent, 
+    y = win_probability, fill = party)) + geom_boxplot() + labs(title = &quot;Incumbent Advantage per Party for the 2018 Senate Elections&quot;, 
+    x = &quot;Incumbent Status&quot;, y = &quot;Win Probability&quot;) + theme_classic()
+cols &lt;- c(D = &quot;royalblue&quot;, G = &quot;mediumseagreen&quot;, I = &quot;orchid4&quot;, 
+    L = &quot;chocolate3&quot;, R = &quot;firebrick3&quot;)
+boxplot + scale_fill_manual(values = cols)</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-4-2.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># Plotting mean voting share based on U.S. region and party
+# affiliation
+data2 &lt;- merged_data_edit %&gt;% pivot_wider(names_from = party, 
+    values_from = voteshare)
+data2 &lt;- data2 %&gt;% select(region, D:I)
+voteshare_data.m &lt;- melt(data2, id.vars = &quot;region&quot;)
+
+ggplot(voteshare_data.m, aes(region, value)) + geom_bar(aes(fill = variable), 
+    width = 0.4, position = position_dodge(width = 0.5), stat = &quot;summary&quot;, 
+    fun = mean) + theme(legend.position = &quot;top&quot;, legend.title = element_blank()) + 
+    ggtitle(&quot;Party Voting Share Based on Region for the 2018 Senate Election&quot;) + 
+    labs(x = &quot;U.S. Region&quot;, y = &quot;Voting Share (%)&quot;) + scale_fill_manual(values = cols) + 
+    scale_y_continuous(breaks = seq(0, 100, 5))</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-4-3.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># Plotting mean winning probability share based on U.S.
+# region and party affiliation
+data3 &lt;- merged_data_edit %&gt;% pivot_wider(names_from = party, 
+    values_from = win_probability)
+data3 &lt;- data3 %&gt;% select(region, D:I)
+winprob_data.m &lt;- melt(data3, id.vars = &quot;region&quot;)
+
+ggplot(winprob_data.m, aes(region, value)) + geom_bar(aes(fill = variable), 
+    width = 0.4, position = position_dodge(width = 0.5), stat = &quot;summary&quot;, 
+    fun = mean) + theme(legend.position = &quot;top&quot;, legend.title = element_blank()) + 
+    ggtitle(&quot;Party Win Probability Based on Region for the 2018 Senate Election&quot;) + 
+    labs(x = &quot;U.S. Region&quot;, y = &quot;Win Probability&quot;) + scale_fill_manual(values = cols) + 
+    scale_y_continuous(breaks = seq(0, 1, 0.05))</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-4-4.png" width="672" style="display: block; margin: auto;" /></p>
+<p><em>A heatmap was created to plot correlation values for the four numeric variables in the merged dataset (the plot was created in a way to avoid redundancy in information). Since the correlation matrix revealed a high level of correlation across all the variables, the heatmap color distribution accordingly reflects this. Seven of the ten tiles represent a Pearson correlation value above 0.99, while the other three, which associate winning probability with the three vote share metrics, are close to/fall slightly below 0.8. These findings indicate that while all generated correlations are objectively strong, vote share and 90th percentile vote share, as two distinct variables, maintain the strongest linear relationship in the data.</em></p>
+<p><em>Incumbent advantage on winning probability categorized by party was visualized using a boxplot. As a whole, the results are consistent with the idea that incumbents enjoy a much higher probability of winning compared to their novice counterparts. Additionally, the mean win probability for Democrats is slightly higher than that for Republicans in both the incumbent and non-incumbent condition. Yet, while the win probability spread is greater for Republican incumbents, there is conversely greater distribution in the spread for Democrat non-incumbents. External third party non-incumbent candidates have little to no chance of winning based on the forecast data.</em></p>
+<p><em>A grouped bar plot was created to demonstrate forecasted voting share percentages by each party across the four U.S. regions. The barplot demonstartes that Democrats generally enjoy a higher voting share compared to their Republican counterparts in all regions. The Northeast is a specific outlier when looking at the mostly low voting share among third parties; Independent Bernie Sanders (a long-standing incumbent) is from the Northeast. The data suggests that Democrats capture a slight majority of the voting share in the Midwest and Northeast. However, in the South and West, Democrats capture a plurality of the voting share, indicating a level of competition in the elections.</em></p>
+<p><em>According to the correlation matrix, the Pearson correlation coefficient between voting share and probability of winning for the 2018 Senate elections is 0.794. When comparing the voting share barplot (which showed much closer values between Democrats and Repubicans, especially for the Midwest, South, and West), the winning probability is more pronounced for Democratic candidates in the Midwest and Northeast. These are somewhat consistent with demographic trends, since while the Northeast has historically been a strong Democratic foothold, the Midwest is more mixed. It is important to remember that these are merely projections, and the actual outcomes of the 2018 Senate do demonstrate some concordance: ultimately 24 Democrats and 12 Republicans won their Senate seats.</em></p>
+</div>
+<div id="dimensionality-reduction" class="section level2">
+<h2>Dimensionality Reduction</h2>
+<pre class="r"><code># Clustering using PAM
+clust_dat &lt;- merged_data_edit %&gt;% select(win_probability, voteshare, 
+    p90_voteshare) %&gt;% sample_n(1000)
+library(cluster)
+sil_width &lt;- vector()
+for (i in 2:10) {
+    pam_fit &lt;- pam(clust_dat, k = i)
+    sil_width[i] &lt;- pam_fit$silinfo$avg.width
+}
+ggplot() + geom_line(aes(x = 1:10, y = sil_width)) + scale_x_continuous(name = &quot;k&quot;, 
+    breaks = 1:10) + ggtitle(&quot;Comparing Silhouette Widths&quot;)</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-5-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># Ideal number of clusters is 2 based on highest silhouette
+# width
+
+pam1 &lt;- clust_dat %&gt;% pam(k = 2)
+pamclust &lt;- clust_dat %&gt;% mutate(cluster = as.factor(pam1$clustering))
+
+# Average silhouette width
+pam1$silinfo$avg.width</code></pre>
+<pre><code>## [1] 0.70483</code></pre>
+<pre class="r"><code># Visualization based on first two numerical variables
+ggplot(pamclust, aes(x = voteshare, y = win_probability, color = cluster)) + 
+    geom_point() + ggtitle(&quot;2-D Visualization of Clusters&quot;)</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-5-2.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># Visualization based on three numerical variables
+library(plotly)
+clusterplot &lt;- pamclust %&gt;% plot_ly(x = ~voteshare, y = ~win_probability, 
+    z = ~p90_voteshare, color = ~cluster, type = &quot;scatter3d&quot;, 
+    mode = &quot;markers&quot;)
+clusterplot %&gt;% layout(title = &quot;3-D Visualization of Clusters&quot;)</code></pre>
+<div id="htmlwidget-1" style="width:672px;height:480px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-1">{"x":{"visdat":{"b73375cc3aa3":["function () ","plotlyVisDat"]},"cur_data":"b73375cc3aa3","attrs":{"b73375cc3aa3":{"x":{},"y":{},"z":{},"mode":"markers","color":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"type":"scatter3d"}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"title":"3-D Visualization of Clusters","scene":{"xaxis":{"title":"voteshare"},"yaxis":{"title":"win_probability"},"zaxis":{"title":"p90_voteshare"}},"hovermode":"closest","showlegend":true},"source":"A","config":{"showSendToCloud":false},"data":[{"x":[61.31,56.31,52.04,38.51,58.21,30.76,29.65,32.79,48.31,48.18,53.71,55.29,51.79,46.58,44.19,38.48,56.65,46.65,50.65,47.65,51.47,60.48,62.63,43.62,62.43,54.03,55.36,60.28,44.25,66.37,56.31,45.53,50.35,43.29,61.2,68.66,57.01,39.48,50.65,27.53,56.57,49.43,32.47,36.73,63.96,40.47,48.92,41.86,67.93,44.63,54.39,33.03,33.56,55.24,58.83,52.89,32.37,51.46,46.18,50.6,60.23,51.35,66.96,58.22,62.91,25.28,58.2,48.61,55.42,63.56,59.03,49.28,31.1,44.22,41.03,41.3,41.28,42.07,67.51,33.22,60.5,53.46,36.35,31.35,35.79,38,40.77,48.87,64.11,50.4,59.52,64.87,37.11,30.98,36.8,39.59,35.13,56.51,42.99,45.25,68.17,58.36,33.59,38.73,48.97,51.4,51.11,55.58,44.06,49.16,67.43,57.21,57.24,41.82,60.55,50.14,40.14,38.81,27.43,59.21,49.24,40.95,61.72,44.48,48.6,60.58,34.55,52.32,29.73,67.06,58.98,52.36,43.22,41.79,57.98,65.33,45.05,45.8,48.74,62.63,56.27,62.02,37.1,49.36,46.83,49.39,57.9,48.23,49.08,41.49,30.24,49.3,50.72,36.35,65.96,49.17,34.72,45.06,56.57,57.59,67.88,53.4,48.97,46.86,50.46,48.19,58.45,48.97,43.25,59.14,47.86,38.22,68.5,27.38,42.2,37.37,48.47,50.42,43.15,51.05,28.69,49.22,45.45,26.71,48.11,64.3,51.55,56.55,65.15,55.02,36.35,50.64,33.1,36.64,36.7,32.76,33.76,56.86,50.59,37.11,48.95,58.11,48.49,57.73,57.82,48.32,38.11,24.38,43.71,49.15,49.24,39.22,45.73,38.07,39.78,38.15,55.2,35.75,36.48,61.02,44.21,57.43,60.2,51.86,27.05,38.61,63.79,45.76,46.16,61.38,38.65,27.08,51.79,35.61,34.87,35.11,42.07,37.72,43.73,39.55,61.59,50.21,46,43.68,67.28,36.35,61.65,38.21,46.64,72.97,48.09,56.59,47.35,64.87,44.77,40,66.92,55.91,52.45,31,36.35,49.27,41.02,49.67,51.24,65.13,27.18,65.46,33.5,55.47,73.36,55.5,40.09,46.96,76.41,47,52.13,67.71,37.52,50.12,41.79,33.25,51.39,53.51,50.93,49.3,57.94,48.91,62.7,67.83,49.75,50.02,64.47,51.28,58.4,47.65,58.69,50.65,45.96,55.62,48.1,29.81,33.26,64.95,42.96,50.63,44.52,49.6,43.43,52.32,44.05,58.99,33.36,51.13,45.35,59.76,28.22,41.46,56.31,43.49,67.82,66.48,66.46,35.95,36.08,44.46,62.6,73.09,52.93,51.1,67.59,47.8,45.05,67.43,66.17,33.55,47.63,60.34,67.97,48.6,52.95,72.84,50.39,41.6,63.14,56.81,36.22,65.35,56.72,50.13,44.09,49.07,50.67,45.69,28.8,68.84,53.43,62.84,56.34,59.25,50.56,62.92,33.43,35.72,76.52,63.42,50.43,40.75,60.18,39.87,54.78,49.78,33.28,47.68,38.32,60.11,49.4,55.51,51.2,36.53,43.7,46.5,49.09,46.22,56.77,39.87,27.57,38.93,57.16,28.65,38.2,46.36,62.63,39.5,65.73,63.65,46.23,50.39,56.98,43.67,39.82,31.12,47.52,49.14,55.69,46.78,38.91,66.58,52.26,63.29,44.03,49.39,61.48,45.63,44.09,40.99,60.42,40.09,56.23,38.51,26.98,61.85,47.91,56.75,45.14,75.45,50.87,28.81,33.33,43.93,61.68,41.86,51.04,39.72,35.67,41.6,35.17,43.7,39.27,36.17,35.11,45.72,38.61,44.09,55.46,59.52,62.23,50.29,43.65,40.48,51.04,24.94,52.08,57.98,52.17,60.61,47.64,51.83,48.83,42.67,67.86,51.93,44.63,36.35,52.14,64.24,27.36,56.96,44.79,62.31,62.99,27.98,51.09,51.14,48.76,61.31,50.25,62.33,36.35,44.4,55.56,29.1,52.22,43.69,68.25,75.67,46,51.29,37.9,38.68,43.93,62.23,31.41,39.84,62.21,50.48,43.19,39.64,49.1,51.6,39.49,42.88,43.16,37.09,76.64,62.21,50.64,48.92,47.2,61.14,48.13,51.5,67.33,59.28,28.91,36.7,37.48,46.81,52.61,27.12,56.7,64.06,47.57,76.57,62.02,46.53,46.21,44.8,32.4,49.43,45.83,67.66,65.46,38.03,49.69,56.8,49.69,66.51,37.75,57.81,58.65,44.43,56.61,29.82,53.6,43.54,49.54,51.36,39.66,54.08,57.74,43.28,43.22,73.11,49.79,50.66,43.75,50.29,45.93,52.47,48.55,49.46,38.12,47,57.68,49.61,36.07,50.41,56.5,46.23,61.57,50.27,76.4,49.9,38.41,40.52,43.8,39.85,53.57,39.99,38.48,56.58,41.49,55.92,47.42,50.89,31.11,32.74,63.56,55.96,46.46,38.79,39.59,38.77,58.26,57.27,45.53,62.63,38.07,49.36,29.35,39.5,62.51,47.43,41.14,38.14,59.24,56.92,38.05,52.78,68.14,35.46,67.7,62.22,62.25,51.1,67.17,35.36,66.72,64.2,51.57,41.5,45.08,62.63,39.62,51.97,42.25,43.74,41.65,49.03,26.31,61.82,45.66,52.31,47.89,41.22,61.74,45.74,40.68,51.51,28.88,56.68,50.77,42.65,45.97,52.7,47.91,38.21,51.68,66.6,40.24,33.92,53.95,48.15,42.4,35.43,63.24,46.54,76.8,33.17,76.37,48.67,49.44,51.38,56.14,61.66,56.57,58.72,62.44,39.95,59.92,40.47,46.28,28.3,60.59,40.95,54.76,56.14,32.9,49.54,42.13,42.69,36.35,59.11,68.17,38.16,65.41,36.08,62.12,59.77,38.21,53.53,27.46,39.23,68.13,47.74,67.93,51.34,48.56,50.96,54.13,50.92,62.63,27,51.46,49.61,45.84,60.14,41.42,42.75,40.56,49.5,48.79,33.58,76.77,42.07,48.01,61.63,39.23,49.29,75.8,51.26,33.37,41.66,36.7,53.27,54.66,49.54,39.85,29.71,39.4,60.82,63.16,62.58,44.95,44.99,50.53,59.02,43.55,49.16,35.22,51.29,36.35,35.95,53.58,55.42,46.44,50.44,68.01,56.81,50.86,51.08,64.49,52.84,75.87,39.4,49.27,67.82,66.86,41.23,50.79,40.56,53.65,34.71,50.66,64.42,42.16,76.24,52.3,56.3,40.25,48.64,32.82,68.22,39.26,51.83,25.13,33.55,57.55,29.83,60.39,46.4,56.55,34.97,53.71,44.25,53.63,56.4,46.99,55.56,68.32,46.35,57.47,41.45,39.86,35.19,44.32,35.23,37.14,53.53,46.98,41.55,49.29,66.84,60.41,46.6,50.59,38.74,50.49,43.59,49.45,35.74,58.97,38.32,50.83,57.76,43.67],"y":[0.9983,0.9494,0.8117,0.8223,0.9936,0.0015,0.0002,0.0083,0.4659,0.4472,0.9157,0.9593,0.7542,0.2732,0.1219,0.031,0.9748,0.21,0.6998,0.3604,0.7623,0.9986,0.9977,0.0794,0.9967,0.8505,0.953,0.9844,0.1093,0.9991,0.9775,0.1681,0.7023,0.0289,0.998,0.9999,0.9874,0.0064,0.7208,0.002,0.9089,0.5803,0.0001,0.003,0.9995,0.0092,0.3822,0.0212,0.9999,0.1409,0.9155,0.0012,0.0024,0.9665,0.9874,0.909,0.0007,0.9904,0.3017,0.7232,0.9827,0.7422,0.9999,0.9984,0.9989,0.0003,0.987,0.4975,0.9171,0.9915,0.9937,0.6385,0.0003,0.1186,0.0413,0.0338,0.032,0.0843,0.9991,0.0001,0.9924,0.8592,0.001,0.0159,0.0021,0.0021,0.0155,0.5343,0.9988,0.7233,0.9854,0.9987,0.0073,0.0018,0.0008,0.0091,0.002,0.97,0.0712,0.129,0.9999,0.9921,0.001,0.0937,0.3765,0.6403,0.6216,0.9592,0.1073,0.6348,0.9981,0.9852,0.9843,0.074,0.9959,0.6457,0.1713,0.8378,0.0003,0.9913,0.5825,0.0427,0.996,0.1272,0.5384,0.9982,0.0006,0.9922,0.0001,0.9983,0.9717,0.8357,0.0708,0.0466,0.9642,1,0.1579,0.199,0.3827,0.9976,0.95,0.9858,0.0028,0.6013,0.2296,0.9674,0.988,0.2803,0.5571,0.0703,0.0093,0.5972,0.9713,0.0006,0.9961,0.3879,0.0004,0.1417,0.91,0.9872,0.9999,0.9207,0.5371,0.2874,0.7528,0.439,0.9732,0.3766,0.0733,0.9991,0.38,0.0154,1,0.0002,0.0822,0.0026,0.5195,0.7236,0.1297,0.6149,0.0006,0.5694,0.1768,0.0007,0.4388,0.9989,0.7015,0.9669,0.9996,0.9566,0.0007,0.6848,0.0009,0.019,0.0004,0.0085,0.0011,0.9713,0.5719,0.1745,0.3964,0.9909,0.5187,0.9932,0.987,0.3275,0.0051,0.0018,0.0502,0.3995,0.411,0.008,0.197,0.0201,0.0059,0.0033,0.9319,0.0015,0.0064,0.9924,0.0448,0.9855,0.9971,0.6812,0.0009,0.0052,0.9919,0.2206,0.3076,0.9939,0.8214,0.002,0.8032,0.8227,0.0004,0.0013,0.08,0.0025,0.054,0.075,0.997,0.52,0.2285,0.1641,0.9998,0.0006,0.9977,0.0044,0.3044,0.9991,0.4804,0.9815,0.2877,0.9981,0.1293,0.0105,0.9972,0.941,0.8382,0.0146,0.0009,0.4136,0.0204,0.9785,0.6106,0.9993,0.001,0.9999,0.001,0.9311,0.9991,0.9226,0.0569,0.3245,1,0.3388,0.7831,0.9998,0.005,0.717,0.0699,0.0015,0.9945,0.8596,0.9881,0.5745,0.9966,0.3923,0.9988,0.9999,0.6335,0.6267,0.9991,0.7722,0.9936,0.4708,0.9864,0.5663,0.1945,0.9281,0.3904,0.0045,0.0015,0.9996,0.0513,0.7056,0.132,0.4567,0.0249,0.8699,0.1028,0.9935,0.0007,0.7447,0.2112,0.9985,0.0017,0.0124,0.9609,0.0366,0.9981,0.9999,0.9988,0.8371,0.0009,0.1254,0.9992,0.999,0.8584,0.7412,0.9999,0.4039,0.1485,0.9998,0.9987,0.0002,0.4328,0.999,1,0.486,0.8804,0.999,0.7052,0.0201,0.9988,0.8889,0.0064,0.9998,0.9673,0.5134,0.0564,0.5462,0.5848,0.1851,0.0042,1,0.8844,0.9987,0.9892,0.9944,0.755,0.9989,0.0012,0.0005,0.9997,0.9993,0.9939,0.0127,0.9942,0.1507,0.8718,0.6117,0.0001,0.4035,0.0049,0.9981,0.9661,0.978,0.6788,0.0014,0.0497,0.2968,0.5557,0.2523,0.9811,0.8764,0.0001,0.7385,0.9851,0.0009,0.1391,0.2588,0.9972,0.0047,0.9956,0.9994,0.2627,0.7046,0.984,0.0334,0.0117,0.0073,0.4128,0.5612,0.9289,0.2051,0.0057,0.9992,0.8093,0.9994,0.1027,0.5832,0.9926,0.1782,0.2224,0.0168,0.9989,0.0204,0.9497,0.8234,0.0016,0.9977,0.4021,0.9855,0.198,0.9996,0.5849,0.0012,0.0001,0.1402,0.9891,0.0256,0.7161,0.017,0.0014,0.0642,0.8127,0.0814,0.0125,0.0065,0.0015,0.283,0.0055,0.1046,0.9666,0.9857,0.9987,0.6725,0.0317,0.1754,0.7108,0.0016,0.868,0.9884,0.8469,0.9985,0.4359,0.6905,0.9884,0.0304,0.9999,0.7915,0.1375,0.0008,0.7793,0.9992,0.0021,0.9733,0.1307,0.9993,0.9991,0.0016,0.7184,0.7731,0.5026,0.9987,0.6612,0.9991,0.0006,0.1322,0.9578,0.0039,0.8097,0.0429,0.9999,0.9997,0.2071,0.6137,0.0034,0.1303,0.1048,0.9986,0.0153,0.0205,0.9988,0.9831,0.1121,0.0109,0.6295,0.7554,0.0071,0.0489,0.105,0.1695,1,0.9984,0.9921,0.5337,0.3103,0.9955,0.4336,0.7894,0.9978,0.9956,0.0025,0.1811,0.0014,0.2839,0.8637,0.0003,0.9668,0.9986,0.3426,1,0.9859,0.2952,0.3615,0.0823,0.0007,0.4379,0.177,0.9998,0.9999,0.0047,0.6007,0.9851,0.4658,0.9999,0.0032,0.9935,0.9741,0.1215,0.9116,0.0054,0.9237,0.0925,0.5741,0.7694,0.0123,0.9262,0.9795,0.0327,0.0214,0.999,0.981,0.7074,0.1381,0.6403,0.148,0.8505,0.4947,0.6067,0.0053,0.2957,0.9926,0.5929,0.0008,0.5457,0.9738,0.3651,0.9966,0.6581,1,0.6475,0.8186,0.8548,0.0446,0.8741,0.9003,0.0182,0.0118,0.9839,0.2493,0.9629,0.4052,0.9948,0.0084,0.0005,0.9993,0.9726,0.2013,0.8244,0.15,0.8283,0.9931,0.986,0.2769,0.9978,0.0154,0.5888,0.0015,0.0122,0.9993,0.3626,0.8685,0.0038,0.9944,0.9795,0.0197,0.884,1,0.0057,0.9998,0.9994,0.9968,0.6211,0.9989,0.0026,0.9999,0.9991,0.7806,0.0228,0.1324,0.9986,0.0415,0.7919,0.0847,0.0521,0.0404,0.4018,0.0015,0.9984,0.2181,0.875,0.4634,0.0882,0.9838,0.2021,0.0146,0.7759,0.0046,0.9814,0.5841,0.0393,0.2093,0.8589,0.3759,0.0159,0.76,0.999,0.0547,0.0014,0.9271,0.3966,0.0422,0.0026,0.9992,0.2998,1,0.0003,1,0.3679,0.9686,0.6773,0.9584,0.9923,0.9838,0.9935,0.9971,0.015,0.998,0.017,0.2395,0.0001,0.9966,0.0155,0.9327,0.9596,0.0013,0.4517,0.0784,0.0403,0.0006,0.9955,0.9999,0.0058,0.9986,0.0069,0.9992,0.9977,0.0055,0.9298,0.0024,0.0073,1,0.3993,0.9999,0.754,0.4878,0.9928,0.928,0.5888,0.9993,0.0017,0.744,0.459,0.2075,0.9971,0.0144,0.0528,0.0391,0.5841,0.5559,0.0034,1,0.0216,0.4746,0.9949,0.0029,0.4379,0.9998,0.6173,0.0009,0.0264,0.0198,0.9072,0.9461,0.6069,0.1465,0.0001,0.014,0.9931,0.9989,0.9987,0.1442,0.1483,0.5589,0.9967,0.0332,0.5627,0.0017,0.6613,0.0006,0.0068,0.8625,0.9533,0.1847,0.6898,0.9999,0.9885,0.7166,0.8063,0.9994,0.8608,1,0.0103,0.4204,1,0.9999,0.0585,0.5909,0.0335,0.9118,0.0038,0.5792,0.9991,0.0517,1,0.9944,0.9574,0.0142,0.5047,0.0011,0.9999,0.2362,0.8551,0.0003,0.0015,0.9479,0.0001,0.9989,0.2763,0.9698,0.0012,0.9073,0.0392,0.8751,0.982,0.2766,0.9651,0.9999,0.2399,0.9844,0.0264,0.1503,0.0008,0.0442,0.0048,0.0118,0.8983,0.2327,0.0776,0.421,0.9998,0.9949,0.3177,0.9922,0.0949,0.5534,0.0263,0.4463,0.0014,0.9882,0.0109,0.5938,0.9866,0.0432],"z":[66.37,61.2,56.84,45.46,62.6,37.21,34.83,40.59,52.85,52.7,59.91,59.98,57.62,51.96,49.04,44.56,61.63,50.85,55.92,51.94,56.64,65.22,68.48,48.18,67.71,58.99,60.29,66.47,49.05,72.42,60.89,50.07,55.97,47.23,66.22,74.25,61.75,44.13,55.2,34.51,62.86,54.54,37.42,41.79,69.48,44.91,53.64,46.33,74.02,49.69,60.48,38.68,38.84,60.29,64.97,57.84,38.08,57.79,51.58,55.43,67.33,56.15,71.8,64.57,68.49,33.27,63.58,52.48,60.41,71.31,64.03,55.22,36.79,49.22,46.36,47.33,47.12,47.57,75.75,37.9,66.41,59.26,41.82,37.73,40.98,42.45,45.52,53.42,70.63,56.01,65.1,70.55,42.93,37.51,41.48,44.47,40.92,60.85,47.88,50.66,74.06,63.26,39.46,47.22,53.27,56.32,55.77,61.6,48.74,54.85,75.17,61.94,62.05,48.07,65.9,54.98,48.32,45.73,33.41,64.94,54.27,46.37,66.86,49.54,53.94,65.6,39.78,58.42,34.65,75.45,64.79,57.26,47.88,47.05,63.66,70.31,49.99,50.82,54.06,68.4,61.04,68.75,42.23,53.15,51.1,56.14,63.16,52.16,53.4,47.79,36.54,54.32,57.71,41.81,74.29,53.04,39.47,49.69,62.82,62.69,73.71,58.01,53.64,51.34,56.6,52.44,63.93,53.38,47.91,65.19,52.58,44.97,74.81,33.53,48.33,43.14,54.42,55.92,48.56,55.77,34.69,55.09,49.77,34.92,52.64,70.08,55.35,60.98,70.74,60.46,41.79,55.43,38.97,43.72,41.53,40.56,39.43,62.01,54.73,44.62,54.24,65.56,54.44,62.37,62.97,53.17,43.57,32.75,48.54,53.44,53.46,44.15,50.68,43.12,44.17,42.77,60.82,41.07,42.48,67.08,48.53,62.2,65.43,56.96,35.24,44.37,71.58,50.42,51.54,66.69,45.65,34.52,56.47,42.09,39.51,40.12,48.01,43.31,48.65,46.46,66.53,54.69,50.99,49.17,73.47,41.79,66.97,43.04,51.9,81.21,54.09,61.1,51.72,70.67,49.14,44.69,74.98,60.75,57.41,37.54,41.84,53.64,45.69,56.01,56.91,70.83,35.46,70.54,38.99,60.2,81.56,61.63,46.34,51.74,82.35,52.22,57.6,73.64,42.88,54.35,47.32,38.42,57.18,59.34,57.27,53.79,64.03,54.18,68.01,73.61,53.71,54.41,70.26,55.68,63.09,53.46,64.8,55.62,50.74,61.74,52.11,35.38,38.68,69.89,47.68,55.44,49.55,54.35,47.57,56.54,49.01,64.03,38.9,55.85,50.84,66.57,35.76,45.7,60.79,48.05,75.94,71.74,72.61,42.58,40.7,49.06,67.48,81.27,57.91,55.79,72.34,52.86,49.94,73.51,72.19,38.42,53.57,67,74.42,52.92,57.77,81.09,55.44,46.15,68.67,63.83,42.25,70.34,61.3,55.2,48.82,54.01,54.85,50.29,34.7,74.14,59.93,68.73,62.25,64.35,54.94,68.49,39.54,40.08,84.48,68.73,56.09,45.33,65.38,47.94,60.19,53.9,38.07,52.5,43.14,67.22,56.09,59.67,54.52,41.24,48.51,51.77,53.63,50.67,60.92,46.36,33.68,46.07,61.85,34.82,45.81,51.26,68.38,43.94,73.98,69.13,51.41,55.99,61.64,47.97,44.74,37.2,52.7,53.68,61.68,50.71,43.96,72.38,57.74,68.59,49.03,53.98,67.03,50.25,50.12,45.75,64.96,45.33,61.02,45.37,35.09,67.75,52.3,61.18,50.59,83.43,56.26,35.11,38.04,49.76,67.87,46.47,55.33,45.98,40.71,47.66,41.81,48.19,44.54,42.27,40.31,51.34,44.35,49.05,60.76,65.12,67.41,55.05,47.84,48.45,55.92,32.67,56.53,63.05,56.71,65.61,52.82,56.71,54.84,47.56,72.75,56.91,49.45,41.81,57.89,69.95,34.66,61.49,49.13,67.06,68.34,34.98,55.75,55.54,53.07,68.44,55.4,67.2,41.83,49.51,60.47,37.38,57.04,48.32,73.91,83.69,50.95,57.04,43.1,47.06,49.03,67.43,37.73,45.46,67.27,56.9,50.34,44.53,54.77,56.55,44.11,47.63,48.32,44.64,82.32,70.03,56.66,53.59,52.14,66.21,52.6,57.61,75.05,64.07,36.62,44.89,41.69,51.36,57.27,33.18,61.19,70.08,52.33,82.4,68.79,51.72,52.18,49.55,38.15,54.08,50.15,73.91,70.59,43.2,54.88,61.62,54.54,71.91,42.98,62.3,64.1,49.27,62.91,35.41,58.44,48.35,53.44,56.15,44.82,59.24,63.33,47.8,47.41,81.36,56.1,55.46,49.04,55.32,50.96,57.16,53,53.84,43.22,51.48,62.27,54.73,40.7,55.16,60.66,52.27,67.46,54.62,82.08,54.09,45.22,47.69,48.4,46.34,58.45,45.23,44.59,61.59,48.61,60.84,52.68,56.8,36.58,38.23,68.98,60.54,50.83,45.91,47.84,45.82,62.88,61.33,51.26,68.33,44.72,53.86,35.55,44.6,67.37,52.41,48.48,42.93,64.04,61.11,43.05,57.58,73.73,41.7,74.14,66.72,67.4,55.77,75.58,40.99,71.52,70.08,55.66,46.24,49.46,68.24,45.61,56.86,47.77,48.58,47.65,54.07,34.49,66.93,51.11,56.94,53.18,47.36,68.35,50.06,45.38,56.42,34.91,60.66,55.51,47.28,50.63,57.69,52.33,44.83,56.59,72.55,46.21,40.05,59.54,52.19,47.29,41.11,68.71,51.76,82.42,38.22,82.17,53.91,56.1,55.32,60.6,67.41,61.37,63.37,67.69,45.16,67.2,46.24,51.04,33.65,65.55,45.56,60.6,60.54,38.84,54.38,48.25,47.3,41.85,63.87,74.55,43.19,71,42.17,67.03,67.03,43.36,58.84,34.73,44.02,73.06,52.92,74.25,55.67,52.58,56.9,60.17,56.19,67.4,35.01,56.59,54.66,50.82,65.22,45.74,47.73,46.08,54.58,54.38,38.75,82.36,46.33,54.04,67.47,43.63,55.18,83.74,56.51,38.73,46.48,43.79,58.14,60.57,54.5,47.91,34.99,44.72,66.56,68.7,68.19,49.85,49.81,55.4,63.58,47.89,53.47,40.37,55.33,41.81,41,59.41,60.65,50.49,54.91,72.89,61.16,55.68,55.26,70.21,57.91,81.85,44.48,53.98,72.76,72.11,47.37,55.26,45.86,59.82,40.93,55.02,69.43,47.18,82.15,57.76,60.8,45.1,53.05,38.55,72.85,47.44,57.34,33.17,39.65,63.46,34.92,67.19,51.23,61.93,40.59,58.68,48.31,59.17,60.8,51.6,61.05,74.62,51.29,64.38,46.95,47.9,40.05,48.49,41.46,43.23,58.44,51.04,47.08,53.99,71.93,65.74,51.6,56.52,47.26,55.29,47.67,54.35,40.72,65.1,44.47,55.37,62.96,48.31],"mode":"markers","type":"scatter3d","name":"1","marker":{"color":"rgba(102,194,165,1)","line":{"color":"rgba(102,194,165,1)"}},"textfont":{"color":"rgba(102,194,165,1)"},"error_y":{"color":"rgba(102,194,165,1)"},"error_x":{"color":"rgba(102,194,165,1)"},"line":{"color":"rgba(102,194,165,1)"},"frame":null},{"x":[23.09,5.2,2.01,23.25,16.15,20.92,5.2,20.98,2.1,5.2,2.03,1.76,2.59,2.14,4.07,3.97,2,18.8,5.2,17.82,24.39,17.63,18.03,5.2,2.7,23.71,24.26,5.2,5.2,3.24,3.06,1.72,3.06,22.8,19.72,2.45,2.82,2.44,1.99,3.31,2.46,2.49,2.02,19.07,2.52,23.89,3.31,21.22,2.76,2.29,23.62,19.3,2.43,3.55,2.5,2.04,2.13,2.87,14.58,2.52,3.55,19.72,23.29,2.13,1.99,2.5,5.2,5.2,2.43,1.99,2.81,2.03,3.97,2.1,5.2,8.48,2.54,5.2,18.86,3.68,4.14,2.45,3.89,3.31,5.2,3.31,1.56,2.48,2.02,2.63,5.2,8.48,18.8,19.17,2.04,23.23,2.69,22.83,3.31,3.31,2.72,3.68,2.41,2.5,19.26,2.23,2.43,5.2,2.97,5.2,5.2,2.52,7,2,2.42,2.61,2,18.33,5.2,18.8,2.4,5.2,2,19.28,1.55,2.46,2.16,1.54,2.02,3.71,2.4,2.47,2.42,2.3,5.2,2.42,2.49,2.44,3.28,3.74,1.66,1.99,2.37,2.02,5.2,4.11,1.57,5.2,19.29,2.04,4.33,2.43,23.27,2.37,2.43,22.76,3.31,1.99,22.9,3.15,5.2,2.46,2.03,23.09,24.84,3.68,5.2,2.01,3.71,2.29,2.2,2.43,2.04,2.17,18.8,2,2.75,18.8,3.31,2.6,2.01,2.33,2.66],"y":[0,0,0,0,0.0037,0.0101,0,0.0109,0,0,0,0,0,0,0.0001,0.0001,0.0001,0.0031,0,0.0033,0,0.003,0.0063,0,0.0001,0.0009,0,0,0.0001,0,0,0,0,0,0.0018,0,0,0,0,0,0,0.0001,0,0.0065,0,0,0,0.0157,0.0001,0,0,0.0059,0.0001,0,0,0,0,0,0.0004,0,0.0001,0.0023,0,0,0,0,0,0,0.0001,0,0,0,0,0,0,0.0002,0,0,0.008,0.0001,0,0,0,0,0,0,0,0.0001,0,0,0,0.0002,0.003,0.0065,0,0,0,0,0,0,0,0,0,0,0.0078,0,0.0001,0,0,0,0,0,0.0002,0,0,0,0,0.0033,0,0.0027,0,0,0,0.0072,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.0001,0,0.0001,0.0059,0,0.0001,0,0,0,0,0,0,0,0.0001,0,0,0,0,0,0.0447,0,0,0,0,0,0,0,0,0,0.0034,0,0.0001,0.0023,0,0,0,0,0],"z":[29.33,9.2,3.82,28.74,22.35,26.97,9.08,27.06,4.12,9.2,3.93,3.53,4.85,4.12,7.44,7.24,4.02,26.04,9.13,23.37,29.7,24.89,24.3,8.74,5.18,31.97,29.77,8.85,9.01,5.99,5.67,3.45,5.68,28.95,26.1,4.65,5.45,4.71,3.98,6.31,4.57,4.8,4.01,25.14,4.93,29.22,6.14,27.12,5.31,4.42,29.45,25.56,4.53,6.68,4.67,4.01,4.15,5.38,20.37,4.92,6.66,26.1,28.95,4.11,3.96,4.86,9.18,9.08,4.71,3.94,5.47,4.02,7.2,4.14,8.92,13.36,4.72,8.92,25.1,6.65,7.56,4.69,7.14,6.15,8.74,6.23,3.1,4.79,4,5.12,8.82,13.22,25.9,25.14,3.96,28.71,5.19,29.18,6.23,6.14,5.02,6.49,4.59,4.67,25.46,4.39,4.71,8.9,5.41,8.96,9.13,4.9,11.46,3.98,4.77,4.87,3.97,25.7,9.22,26.03,4.58,9.18,3.97,25.31,3.05,4.81,4.12,3.01,4.01,6.63,4.63,4.73,4.82,4.49,9.19,4.77,4.69,4.65,6.09,6.73,3.22,4.03,4.6,4,9.2,7.54,3.09,9.11,25.45,4,7.56,4.77,28.93,4.6,4.76,28.92,6.03,3.94,29.3,5.65,9.16,4.72,3.86,29.47,30.44,6.66,9.22,4.04,6.66,4.43,4.36,4.64,4.12,4.3,25.99,3.98,5.34,25.85,6.22,4.99,3.96,4.56,4.99],"mode":"markers","type":"scatter3d","name":"2","marker":{"color":"rgba(141,160,203,1)","line":{"color":"rgba(141,160,203,1)"}},"textfont":{"color":"rgba(141,160,203,1)"},"error_y":{"color":"rgba(141,160,203,1)"},"error_x":{"color":"rgba(141,160,203,1)"},"line":{"color":"rgba(141,160,203,1)"},"frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+<pre class="r"><code># Calculating the mean for each cluster
+pamclust %&gt;% group_by(cluster) %&gt;% summarize_if(is.numeric, mean, 
+    na.rm = T)</code></pre>
+<pre><code>## # A tibble: 2 x 4
+##   cluster win_probability voteshare p90_voteshare
+##   &lt;fct&gt;             &lt;dbl&gt;     &lt;dbl&gt;         &lt;dbl&gt;
+## 1 1              0.522        49.1           54.6
+## 2 2              0.000935      6.87          10.3</code></pre>
+<pre class="r"><code># Final medoids for each cluster
+merged_data_edit %&gt;% slice(pam1$id.med)</code></pre>
+<pre><code>## # A tibble: 2 x 15
+##   forecastdate state_abbrev class special candidate party incumbent model
+##   &lt;date&gt;       &lt;chr&gt;        &lt;dbl&gt; &lt;lgl&gt;   &lt;fct&gt;     &lt;fct&gt; &lt;lgl&gt;     &lt;fct&gt;
+## 1 2018-08-06   MD               1 FALSE   Tony Cam… R     FALSE     clas…
+## 2 2018-08-03   NM               1 FALSE   Gary Joh… L     FALSE     clas…
+## # … with 7 more variables: win_probability &lt;dbl&gt;, voteshare &lt;dbl&gt;,
+## #   p10_voteshare &lt;dbl&gt;, p90_voteshare &lt;dbl&gt;, state &lt;chr&gt;, division &lt;chr&gt;,
+## #   region &lt;chr&gt;</code></pre>
+<p><em>PAM Clustering was conducted for the following three numeric variables: winning probability,voting share, and 90th percentile voting share (which was previously found to be highly correlated with voting share) from a random sample of 1000 observarions. The data was clustered, and silhouette widths were used to determine the number of clusters. Average silhouette width was also determined (see above for code). The highest silhouette width value was found to be slightly greater than 0.67 for k=2, indicating that two clusters may be the best fit for the data clustering. The cluster solution was subsequently saved to the dataset, and two visualizations were performed. The first displays the two clusters along a two-dimensional plot containing voting share and winning probability. This scatterplot indicates that the second cluster encompasses voting share from 0 to about 25% and very low winning probability, while the first cluster depicts an S-shaped curve with a majority of points falling above a voting share of 40% and above 30% probability of winning the election. At around 60% of the voting share, the winning probability levels at close to 1 or 100%. The second visualization is a three-dimensional plot with voting share, winning probability, and 90th percentile voting share. This plot is similar in shape and clustering to the two-dimensional plot; cluster 1 is higher voting share and higher winning probability, while cluster 2 is lower voting share and significantly lower winning probability.</em></p>
+<p><em>The means for the two clusters were calculated across the three variables. For one previously-tested random iteration, Cluster 1 possessed the following mean values for the numeric variables: 0.511 for winning probability, 48.5 for voting share, and 53.9 for 90th percentile voting share. Cluster 2 had a mean winning probability of 0.000930, mean voting share of 7.78, and mean 90th percentile voting share of 11.3. These contrasting values demonstrate two distinct clusters within the data based on the variables. Looking at the final medoids to find k representative objects in the data reveals a candidate that is most representative for each cluster. Since a random sample is taken from the data, the actual candidates change based on the random sample taken. However, several iterations run before suggest that Cluster 2 is primarily comprised of third-party candidates and/or non-incumbents, an outcome which is consistent with other data results reported in this analysis project.</em></p>
+<pre><code>## R version 3.6.1 (2019-07-05)
+## Platform: x86_64-pc-linux-gnu (64-bit)
+## Running under: Ubuntu 18.04.5 LTS
+## 
+## Matrix products: default
+## BLAS:   /stor/system/opt/R/R-3.6.1/lib/R/lib/libRblas.so
+## LAPACK: /stor/system/opt/R/R-3.6.1/lib/R/lib/libRlapack.so
+## 
+## locale:
+##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+##  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+##  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] plotly_4.9.2.1        cluster_2.1.0         reshape2_1.4.4       
+##  [4] forcats_0.5.0         stringr_1.4.0         dplyr_1.0.2          
+##  [7] purrr_0.3.4           readr_1.3.1           tidyr_1.1.1          
+## [10] tibble_3.0.3          ggplot2_3.3.2         tidyverse_1.3.0      
+## [13] fivethirtyeight_0.6.1
+## 
+## loaded via a namespace (and not attached):
+##  [1] Rcpp_1.0.5         lubridate_1.7.9    assertthat_0.2.1   digest_0.6.25     
+##  [5] utf8_1.1.4         R6_2.4.1           cellranger_1.1.0   plyr_1.8.6        
+##  [9] backports_1.1.8    reprex_0.3.0       evaluate_0.14      httr_1.4.2        
+## [13] blogdown_0.20      pillar_1.4.6       rlang_0.4.7        lazyeval_0.2.2    
+## [17] readxl_1.3.1       rstudioapi_0.11    data.table_1.13.0  blob_1.2.1        
+## [21] rmarkdown_2.3      labeling_0.3       htmlwidgets_1.5.1  munsell_0.5.0     
+## [25] broom_0.7.0        compiler_3.6.1     modelr_0.1.8       xfun_0.16         
+## [29] pkgconfig_2.0.3    htmltools_0.5.0    tidyselect_1.1.0   bookdown_0.20     
+## [33] fansi_0.4.1        viridisLite_0.3.0  crayon_1.3.4       dbplyr_1.4.4      
+## [37] withr_2.2.0        grid_3.6.1         jsonlite_1.7.0     gtable_0.3.0      
+## [41] lifecycle_0.2.0    DBI_1.1.0          magrittr_1.5       formatR_1.7       
+## [45] scales_1.1.1       cli_2.0.2          stringi_1.5.3      farver_2.0.3      
+## [49] fs_1.5.0           xml2_1.3.2         ellipsis_0.3.1     generics_0.0.2    
+## [53] vctrs_0.3.2        RColorBrewer_1.1-2 tools_3.6.1        glue_1.4.2        
+## [57] crosstalk_1.1.0.1  hms_0.5.3          yaml_2.2.1         colorspace_1.4-1  
+## [61] rvest_0.3.6        knitr_1.29         haven_2.3.1</code></pre>
+<pre><code>## [1] &quot;2020-12-04 23:01:30 CST&quot;</code></pre>
+<pre><code>##                                       sysname 
+##                                       &quot;Linux&quot; 
+##                                       release 
+##                          &quot;4.15.0-117-generic&quot; 
+##                                       version 
+## &quot;#118-Ubuntu SMP Fri Sep 4 20:02:41 UTC 2020&quot; 
+##                                      nodename 
+##                  &quot;educcomp04.ccbb.utexas.edu&quot; 
+##                                       machine 
+##                                      &quot;x86_64&quot; 
+##                                         login 
+##                                     &quot;unknown&quot; 
+##                                          user 
+##                                     &quot;sr45793&quot; 
+##                                effective_user 
+##                                     &quot;sr45793&quot;</code></pre>
+</div>
+
+            
+        <hr>         <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div> 
+            </div>
+          </div>
+
+   <hr>  <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div> 
+        </div>
+      </div>
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="../../js/docs.min.js"></script>
+<script src="../../js/main.js"></script>
+
+<script src="../../js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>
