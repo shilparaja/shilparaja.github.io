@@ -42,10 +42,13 @@ hist(quakes$mag) import re match = re.match(r&amp;quot;\d+&amp;quot;, &amp;quot;
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>/projects/</guid>
-      <description> Check out some of my coding projects below:
- Wrangling &amp;amp; Exploratory Data Analysis
+      <description>SDS 348 Coding Projects:  Wrangling &amp;amp; Exploratory Data Analysis
  Modeling, Inference, Prediction
-  -- </description>
+  --  Undergraduate Research Projects:  LEAP for Health
+ Examining the Influence of Racial Discrimination and Coping on Blood Pressure
+ Constructing HPV16 Expression Vectors with In-Fusion Cloning: MD Anderson CPRIT CURE Undergraduate Research Program
+  --  Select Design Work:  Protect Texas Together COVID-19 Design Challenge
+ Brochure for the Texas Association of Charitable Clinics</description>
     </item>
     
     <item>
