@@ -1,26 +1,60 @@
 ---
-title: Test Post
+title: "Overview of Python and R from SDS 348"
 author: ''
-date: '2020-12-04'
-slug: test-post
-categories: []
-tags: []
+date: '2020-12-11'
 description: ''
+slug: test-post
+tags: []
+categories: []
 ---
 
-#Heading of my post
+![](/post/2020-12-04-test-post_files/picture.png){width=500px}
 
-Content
+###Exploring Python Functions
 
-##Subheading
-
-Content
+```{python}
+#counting the frequency of nucleotides in a sample DNA sequence
+def count_characters(sequence):
+  counts = {}
+  for c in sequence:
+      if c in counts:
+        counts[c]+=1
+      else:
+        counts[c]=1
+  for c in counts:
+    print("number of times", c, "appears:", counts[c])
+    
+sequence_1 = "gatcctccatatacaacggt"
+count_characters(sequence_1)
+```
 
 ```{R}
-hist(quakes$mag)
+library(reticulate)
+library(ggplot2)
+toothgrowth <- ToothGrowth
+#examining tooth growth in animals as a function of supplement type (orange juice or ascorbic acid/vitamin C) and dosage level
 ```
 
 ```{python}
+r.toothgrowth
+tooth_growth_df = (r.toothgrowth
+.groupby(['supp','dose'])
+.agg(['mean']))
+print(tooth_growth_df)
+```
+
+###Regular Expressions
+
+```{python}
 import re
-match = re.match(r"\d+", "SDS348")
+mrna = "AUGCUUAGUCGACAC"
+codons = re.findall(r"...", mrna)
+print(codons)
+codons_string = str(codons)
+
+if re.search(r"CU[UCAG]", codons_string):
+  print("Amino acid leucine identified.")
+
+if re.search(r"GU[UCAG]", codons_string):
+  print("Amino acid valine identified.")
 ```

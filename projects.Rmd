@@ -36,8 +36,6 @@ hidediscus: true
 
 <i class="fa fa-pencil"></i> &nbsp; [Brochure for the Texas Association of Charitable Clinics](/project/txacc_brochure.pdf)
 
-<i class="fa fa-pencil"></i> &nbsp; [Recovery and Recovery Support Infographics for UT SHIFT](/project/recovery_graphics.pdf)
-
 <!--
 <i class="fa fa-pie-chart"></i> 
 <i class="fa fa-pie-chart"></i> 

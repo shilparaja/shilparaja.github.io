@@ -586,7 +586,7 @@ ROCplot</code></pre>
 <pre class="r"><code>calc_auc(ROCplot)</code></pre>
 <pre><code>##   PANEL group       AUC
 ## 1     1    -1 0.9883333</code></pre>
-<p><em>The odds of a worse access to care rate for the South region are 72.93 times that of the Midwest. Additionally, the odds of a worse access to care rate for areas in the West are 72.13 times that of the Midwest. Controlling for region, for every 1-unit increase in uninsured rates, odds of a worse access to care rate change by a factor of e^200.96 or 1.88e+87. This suggests that percentage of uninsured individuals has a significant positive impact on odds of an area reporting worse access to care rates compared to the national average.</em></p>
+<p><em>Controlling for uninsured rate, the odds of a worse access to care rate for the South region are 72.93 times that of the Midwest. Additionally, controlling for uninsured rate, the odds of a worse access to care rate for areas in the West are 72.13 times that of the Midwest. Controlling for region, for every 1-unit increase in uninsured rates, odds of a worse access to care rate change by a factor of e^200.96 or 1.88e+87. This suggests that percentage of uninsured individuals has a significant positive impact on odds of an area reporting worse access to care rates compared to the national average.</em></p>
 <p><em>A confusion matrix was created to determine the following: accuracy of 0.96, sensitivity of 0.95, specificity of 0.967, and precision of 0.95. These are all relatively high values, conferring greater strength to the model. Additionally, a density plot grouped by the binary outcome variable of access to care and a ROC curve plotting sensitivity and specificity were generated. From the curve, the AOC value was found to be 0.988. This suggests that there is 0.988 probability that the model will be able to differentiate between a y=1 value (worse access to care rate compared to the national average) and y=0 value. In this case, an AUC higher than 0.9 is considered to be great in terms of the model's overall ability to separate between the binary outcomes.</em></p>
 </div>
 <div id="logistic-regression-model-predicting-a-binary-variable-using-all-variables" class="section level2">
@@ -741,11 +741,11 @@ diags %&gt;% summarize_all(mean)</code></pre>
 ## [61] blogdown_0.20     data.table_1.13.0 modelr_0.1.8      vctrs_0.3.2       foreach_1.5.0    
 ## [66] cellranger_1.1.0  gtable_0.3.0      assertthat_0.2.1  xfun_0.16         openxlsx_4.1.5   
 ## [71] broom_0.7.0       survival_3.2-3    iterators_1.0.12  ellipsis_0.3.1</code></pre>
-<pre><code>## [1] &quot;2020-12-04 23:04:51 CST&quot;</code></pre>
+<pre><code>## [1] &quot;2020-12-11 15:57:36 CST&quot;</code></pre>
 <pre><code>##                                       sysname                                       release 
 ##                                       &quot;Linux&quot;                          &quot;4.15.0-117-generic&quot; 
 ##                                       version                                      nodename 
-## &quot;#118-Ubuntu SMP Fri Sep 4 20:02:41 UTC 2020&quot;                  &quot;educcomp04.ccbb.utexas.edu&quot; 
+## &quot;#118-Ubuntu SMP Fri Sep 4 20:02:41 UTC 2020&quot;                  &quot;educcomp02.ccbb.utexas.edu&quot; 
 ##                                       machine                                         login 
 ##                                      &quot;x86_64&quot;                                     &quot;unknown&quot; 
 ##                                          user                                effective_user 
